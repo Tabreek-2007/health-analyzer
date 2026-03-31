@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Health Risk Analyzer</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo" onclick="navigateTo('home')">
+                <i data-lucide="activity" class="logo-icon"></i>
+                <span>HealthAI</span>
+            </div>
+            <div class="nav-links">
+                <button class="nav-btn active" data-target="home">Home</button>
+                <button class="nav-btn" data-target="analyzer">Analyzer</button>
+                <button class="nav-btn" data-target="about">About</button>
+            </div>
+            <!-- Mobile Menu Toggle -->
+            <div class="mobile-toggle">
+                <i data-lucide="menu"></i>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- 1. Home Page -->
+        <section id="page-home" class="page active">
+            <div class="hero">
+                <div class="hero-content">
+                    <div class="badge">
+                        <i data-lucide="sparkles"></i> AI-Powered Analysis
+                    </div>
+                    <h1>Check Your Health Risks in <span class="gradient-text">Seconds</span></h1>
+                    <p class="hero-subtext">
+                        Leverage the power of artificial intelligence to understand your potential health risks based on lifestyle, metrics, and habits. Fast, predictive, and designed to help you live better.
+                    </p>
+                    <div class="hero-actions">
+                        <button class="btn btn-primary btn-large" onclick="navigateTo('analyzer')">
+                            Start Analysis <i data-lucide="arrow-right"></i>
+                        </button>
+                        <button class="btn btn-secondary btn-large" onclick="navigateTo('about')">
+                            Learn How It Works
+                        </button>
+                    </div>
+                </div>
+                <div class="hero-illustration">
+                    <!-- CSS drawn or simple SVG illustration placeholder for the modern look -->
+                    <div class="glass-card floating-card card-1">
+                        <i data-lucide="heart-pulse" class="icon-large text-primary"></i>
+                        <p>Heart Rate</p>
+                        <h3>Optimal</h3>
+                    </div>
+                    <div class="glass-card floating-card card-2">
+                        <i data-lucide="brain-circuit" class="icon-large text-secondary"></i>
+                        <p>AI Engine</p>
+                        <h3>Active</h3>
+                    </div>
+                    <div class="glass-card floating-card card-3">
+                        <i data-lucide="shield-check" class="icon-large text-success"></i>
+                        <p>Overall Risk</p>
+                        <h3>Low</h3>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Analyzer Page -->
+        <section id="page-analyzer" class="page hidden">
+            <div class="page-header">
+                <h2>Health Risk Analyzer</h2>
+                <p>Fill in the details below for an accurate AI assessment.</p>
+            </div>
+            
+            <div class="form-container glass-panel">
+                <form id="analyzer-form">
+                    <div class="form-grid">
+                        <!-- Age & Gender -->
+                        <div class="form-group">
+                            <label for="age"><i data-lucide="user"></i> Age</label>
+                            <input type="number" id="age" name="age" placeholder="e.g., 35" required min="18" max="120">
+                        </div>
+                        <div class="form-group">
+                            <label for="gender"><i data-lucide="users"></i> Gender</label>
+                            <select id="gender" name="gender" required>
+                                <option value="" disabled selected>Select gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <!-- Height & Weight -->
+                        <div class="form-group">
+                            <label for="height"><i data-lucide="ruler"></i> Height (cm)</label>
+                            <input type="number" id="height" name="height" placeholder="e.g., 175" required min="100" max="250">
+                        </div>
+                        <div class="form-group">
+                            <label for="weight"><i data-lucide="weight"></i> Weight (kg)</label>
+                            <input type="number" id="weight" name="weight" placeholder="e.g., 70" required min="30" max="300">
+                        </div>
+                        
+                        <!-- Lifestyle -->
+                        <div class="form-group">
+                            <label for="smoking"><i data-lucide="cigarette"></i> Smoking Habits</label>
+                            <select id="smoking" name="smoking" required>
+                                <option value="never">Never smoked</option>
+                                <option value="former">Former smoker</option>
+                                <option value="occasional">Occasional</option>
+                                <option value="regular">Regular daily</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="alcohol"><i data-lucide="beer"></i> Alcohol Consumption</label>
+                            <select id="alcohol" name="alcohol" required>
+                                <option value="none">None</option>
+                                <option value="occasional">Occasional (1-2/week)</option>
+                                <option value="moderate">Moderate (3-5/week)</option>
+                                <option value="frequent">Frequent (6+/week)</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Activity -->
+                        <div class="form-group full-width">
+                            <label for="activity"><i data-lucide="activity-square"></i> Physical Activity Level</label>
+                            <select id="activity" name="activity" required>
+                                <option value="sedentary">Sedentary (Little to no exercise)</option>
+                                <option value="light">Lightly active (1-3 days/week)</option>
+                                <option value="moderate">Moderately active (3-5 days/week)</option>
+                                <option value="very">Very active (6-7 days/week)</option>
+                            </select>
+                        </div>
+
+                        <!-- Conditions (Checkboxes) -->
+                        <div class="form-group full-width conditions-group">
+                            <label><i data-lucide="stethoscope"></i> Existing Conditions (Select all that apply)</label>
+                            <div class="checkbox-grid">
+                                <label class="custom-checkbox">
+                                    <input type="checkbox" name="conditions" value="hypertension">
+                                    <span class="checkmark"></span> Hypertension
+                                </label>
+                                <label class="custom-checkbox">
+                                    <input type="checkbox" name="conditions" value="diabetes">
+                                    <span class="checkmark"></span> Diabetes Type 2
+                                </label>
+                                <label class="custom-checkbox">
+                                    <input type="checkbox" name="conditions" value="highCholesterol">
+                                    <span class="checkmark"></span> High Cholesterol
+                                </label>
+                                <label class="custom-checkbox">
+                                    <input type="checkbox" name="conditions" value="heartDisease">
+                                    <span class="checkmark"></span> Family Heart Disease
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-block btn-large">
+                            <i data-lucide="cpu"></i> Generate AI Insight
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- 3. Results Page -->
+        <section id="page-results" class="page hidden">
+            <div class="results-layout">
+                <!-- Left: Score & Risk Overview -->
+                <div class="results-score-panel glass-panel">
+                    <div class="score-header">
+                        <h2>Your Health Insight</h2>
+                        <button class="btn btn-outline btn-sm" onclick="navigateTo('analyzer')">
+                            <i data-lucide="refresh-cw"></i> Recalculate
+                        </button>
+                    </div>
+                    
+                    <div class="risk-meter-container">
+                        <!-- SVG Circular Progress will be animated via JS -->
+                        <div class="circular-progress" id="risk-circle">
+                            <div class="inner-circle">
+                                <span class="risk-label">Risk Level</span>
+                                <strong id="risk-level-text" class="risk-value text-success">Low</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bmi-card">
+                        <div class="bmi-info">
+                            <span>BMI</span>
+                            <strong id="bmi-value">22.5</strong>
+                        </div>
+                        <div id="bmi-status" class="bmi-badge bg-success">Normal</div>
+                    </div>
+                </div>
+
+                <!-- Right: Analysis & Suggestions -->
+                <div class="results-details-panel">
+                    <div class="alert-box" id="risk-alert">
+                        <div class="alert-icon"><i data-lucide="info"></i></div>
+                        <div class="alert-content">
+                            <h4>Analysis Complete</h4>
+                            <p id="risk-summary-text">Your overall health profile looks great. Maintain your current lifestyle to keep risks low.</p>
+                        </div>
+                    </div>
+
+                    <h3>Identified Risk Factors</h3>
+                    <div class="risks-list" id="possible-risks-list">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <h3>AI Recommendations</h3>
+                    <div class="suggestions-grid">
+                        <div class="suggestion-card">
+                            <div class="s-icon bg-blue-light"><i data-lucide="apple"></i></div>
+                            <div class="s-content">
+                                <h4>Diet</h4>
+                                <p id="diet-tips">Increase intake of leafy greens and stay hydrated.</p>
+                                <button class="btn btn-outline btn-sm details-btn mt-2" onclick="navigateToDetails('diet')">View Details <i data-lucide="chevron-right"></i></button>
+                            </div>
+                        </div>
+                        <div class="suggestion-card">
+                            <div class="s-icon bg-green-light"><i data-lucide="dumbbell"></i></div>
+                            <div class="s-content">
+                                <h4>Exercise</h4>
+                                <p id="exercise-tips">Continue with 150 minutes of moderate activity weekly.</p>
+                                <button class="btn btn-outline btn-sm details-btn mt-2" onclick="navigateToDetails('exercise')">View Details <i data-lucide="chevron-right"></i></button>
+                            </div>
+                        </div>
+                        <div class="suggestion-card">
+                            <div class="s-icon bg-purple-light"><i data-lucide="heart"></i></div>
+                            <div class="s-content">
+                                <h4>Lifestyle</h4>
+                                <p id="lifestyle-tips">Ensure 7-8 hours of quality sleep per night.</p>
+                                <button class="btn btn-outline btn-sm details-btn mt-2" onclick="navigateToDetails('lifestyle')">View Details <i data-lucide="chevron-right"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. About Page -->
+        <section id="page-about" class="page hidden">
+            <div class="about-container glass-panel">
+                <div class="about-header">
+                    <i data-lucide="bot" class="icon-xl text-primary"></i>
+                    <h2>How the AI Works</h2>
+                </div>
+                <div class="about-content">
+                    <p class="lead">Our Health Risk Analyzer uses advanced algorithmic models inspired by modern predictive health screening factors.</p>
+                    
+                    <div class="how-it-works-grid">
+                        <div class="step-card">
+                            <div class="step-num">1</div>
+                            <h4>Data Collection</h4>
+                            <p>We gather baseline biometrics and lifestyle habits without storing any personally identifiable data.</p>
+                        </div>
+                        <div class="step-card">
+                            <div class="step-num">2</div>
+                            <h4>Pattern Recognition</h4>
+                            <p>The system evaluates your inputs against known medical risk factors for conditions like cardiovascular disease and metabolic syndrome.</p>
+                        </div>
+                        <div class="step-card">
+                            <div class="step-num">3</div>
+                            <h4>Actionable Insights</h4>
+                            <p>An aggregate risk score is calculated, and targeted lifestyle optimization strategies are dynamically assigned.</p>
+                        </div>
+                    </div>
+
+                    <div class="disclaimer-box">
+                        <div class="d-icon"><i data-lucide="alert-triangle"></i></div>
+                        <div class="d-text">
+                            <h4>Medical Disclaimer</h4>
+                            <p>This tool is for educational and informational purposes only. It is <strong>not</strong> a medical diagnosis. The AI model operates on generalized logic and does not replace professional medical advice, diagnosis, or treatment. Always consult a physician or qualified health provider with any questions you may have regarding a medical condition.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Diet Details Page -->
+        <section id="page-diet" class="page hidden">
+            <div class="details-container glass-panel">
+                <div class="breadcrumb">
+                    <span class="text-muted cursor-pointer" onclick="navigateTo('home')">Home</span> 
+                    <i data-lucide="chevron-right" class="icon-sm text-muted"></i> 
+                    <span class="text-muted cursor-pointer" onclick="navigateTo('results')">Results</span>
+                    <i data-lucide="chevron-right" class="icon-sm text-muted"></i> 
+                    <strong>Diet Plan</strong>
+                </div>
+                
+                <div class="details-header bg-blue-light">
+                    <i data-lucide="apple" class="icon-xl text-primary"></i>
+                    <h2>Dietary Recommendations</h2>
+                    <p id="diet-detail-subtitle">Personalized nutrition strategy to manage your health risks.</p>
+                </div>
+
+                <div class="details-content">
+                    <h3>Recommended Diet Plan</h3>
+                    <div id="diet-plan-content" class="plan-card">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <div class="two-col-grid">
+                        <div class="good-foods list-card">
+                            <h4 class="text-success"><i data-lucide="check-circle"></i> Recommended Foods</h4>
+                            <ul id="good-foods-list"></ul>
+                        </div>
+                        <div class="bad-foods list-card alert-danger">
+                            <h4 class="text-danger"><i data-lucide="x-circle"></i> Foods to Limit/Avoid</h4>
+                            <ul id="bad-foods-list"></ul>
+                        </div>
+                    </div>
+
+                    <h3>Example Daily Meal Plan</h3>
+                    <div class="meal-plan-timeline" id="meal-plan-timeline">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <button class="btn btn-primary mt-4" onclick="navigateTo('results')">
+                        <i data-lucide="arrow-left"></i> Back to Results
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Exercise Details Page -->
+        <section id="page-exercise" class="page hidden">
+            <div class="details-container glass-panel">
+                <div class="breadcrumb">
+                    <span class="text-muted cursor-pointer" onclick="navigateTo('home')">Home</span> 
+                    <i data-lucide="chevron-right" class="icon-sm text-muted"></i> 
+                    <span class="text-muted cursor-pointer" onclick="navigateTo('results')">Results</span>
+                    <i data-lucide="chevron-right" class="icon-sm text-muted"></i> 
+                    <strong>Exercise Plan</strong>
+                </div>
+                
+                <div class="details-header bg-green-light">
+                    <i data-lucide="dumbbell" class="icon-xl text-success"></i>
+                    <h2>Exercise & Fitness Plan</h2>
+                    <p id="exercise-detail-subtitle">A balanced approach to cardiovascular and muscular health.</p>
+                </div>
+
+                <div class="details-content">
+                    <h3>Suggested Workout Strategy</h3>
+                    <div id="exercise-plan-content" class="plan-card">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <h3>Weekly Schedule <span class="badge badge-sm" id="exercise-intensity-badge">Moderate</span></h3>
+                    <div class="weekly-schedule-grid" id="weekly-schedule">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <button class="btn btn-primary mt-4" onclick="navigateTo('results')">
+                        <i data-lucide="arrow-left"></i> Back to Results
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Lifestyle Details Page -->
+        <section id="page-lifestyle" class="page hidden">
+            <div class="details-container glass-panel">
+                <div class="breadcrumb">
+                    <span class="text-muted cursor-pointer" onclick="navigateTo('home')">Home</span> 
+                    <i data-lucide="chevron-right" class="icon-sm text-muted"></i> 
+                    <span class="text-muted cursor-pointer" onclick="navigateTo('results')">Results</span>
+                    <i data-lucide="chevron-right" class="icon-sm text-muted"></i> 
+                    <strong>Lifestyle & Habits</strong>
+                </div>
+                
+                <div class="details-header bg-purple-light">
+                    <i data-lucide="moon" class="icon-xl text-accent"></i>
+                    <h2>Lifestyle Optimization</h2>
+                    <p id="lifestyle-detail-subtitle">Daily habits and routines for long-term vitality.</p>
+                </div>
+
+                <div class="details-content">
+                    <div class="two-col-grid">
+                        <div class="lifestyle-card">
+                            <div class="l-card-icon text-accent"><i data-lucide="zzz"></i></div>
+                            <h4>Sleep Recommendations</h4>
+                            <p id="sleep-tips">Aim for 7-9 hours of consistent, uninterrupted sleep.</p>
+                        </div>
+                        <div class="lifestyle-card">
+                            <div class="l-card-icon text-warning"><i data-lucide="brain"></i></div>
+                            <h4>Stress Management</h4>
+                            <p id="stress-tips">Incorporate 10 minutes of mindfulness or meditation daily.</p>
+                        </div>
+                    </div>
+
+                    <h3>Daily Do's and Don'ts</h3>
+                    <div class="two-col-grid mt-2">
+                        <div class="good-habits list-card">
+                            <h4 class="text-success"><i data-lucide="thumbs-up"></i> Do's</h4>
+                            <ul id="dos-list"></ul>
+                        </div>
+                        <div class="bad-habits list-card alert-danger">
+                            <h4 class="text-danger"><i data-lucide="thumbs-down"></i> Don'ts</h4>
+                            <ul id="donts-list"></ul>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary mt-4" onclick="navigateTo('results')">
+                        <i data-lucide="arrow-left"></i> Back to Results
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- App Logic -->
+    <script src="app.js"></script>
+</body>
+</html>
