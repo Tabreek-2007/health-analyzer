@@ -21,9 +21,10 @@
                 <i data-lucide="activity" class="logo-icon"></i>
                 <span>HealthAI</span>
             </div>
-            <div class="nav-links">
+            <div class="nav-links" id="nav-links">
                 <button class="nav-btn active" data-target="home">Home</button>
                 <button class="nav-btn" data-target="analyzer">Analyzer</button>
+                <button class="nav-btn" data-target="progress">Progress</button>
                 <button class="nav-btn" data-target="about">About</button>
             </div>
             <!-- Mobile Menu Toggle -->
@@ -89,7 +90,8 @@
                         <!-- Age & Gender -->
                         <div class="form-group">
                             <label for="age"><i data-lucide="user"></i> Age</label>
-                            <input type="number" id="age" name="age" placeholder="e.g., 35" required min="18" max="120">
+                            <input type="number" id="age" name="age" placeholder="e.g., 35" min="1" max="120" required>
+                            <span class="error-msg" id="error-age"></span>
                         </div>
                         <div class="form-group">
                             <label for="gender"><i data-lucide="users"></i> Gender</label>
@@ -99,76 +101,85 @@
                                 <option value="female">Female</option>
                                 <option value="other">Other</option>
                             </select>
+                            <span class="error-msg" id="error-gender"></span>
                         </div>
 
                         <!-- Height & Weight -->
                         <div class="form-group">
                             <label for="height"><i data-lucide="ruler"></i> Height (cm)</label>
-                            <input type="number" id="height" name="height" placeholder="e.g., 175" required min="100" max="250">
+                            <input type="number" id="height" name="height" placeholder="e.g., 175" min="50" max="300" required>
+                            <span class="error-msg" id="error-height"></span>
                         </div>
                         <div class="form-group">
                             <label for="weight"><i data-lucide="weight"></i> Weight (kg)</label>
-                            <input type="number" id="weight" name="weight" placeholder="e.g., 70" required min="30" max="300">
+                            <input type="number" id="weight" name="weight" placeholder="e.g., 70" min="20" max="300" required>
+                            <span class="error-msg" id="error-weight"></span>
                         </div>
                         
                         <!-- Lifestyle -->
                         <div class="form-group">
                             <label for="smoking"><i data-lucide="cigarette"></i> Smoking Habits</label>
                             <select id="smoking" name="smoking" required>
+                                <option value="" disabled selected>Select option</option>
                                 <option value="never">Never smoked</option>
                                 <option value="former">Former smoker</option>
                                 <option value="occasional">Occasional</option>
                                 <option value="regular">Regular daily</option>
                             </select>
+                            <span class="error-msg" id="error-smoking"></span>
                         </div>
                         <div class="form-group">
                             <label for="alcohol"><i data-lucide="beer"></i> Alcohol Consumption</label>
                             <select id="alcohol" name="alcohol" required>
+                                <option value="" disabled selected>Select option</option>
                                 <option value="none">None</option>
                                 <option value="occasional">Occasional (1-2/week)</option>
                                 <option value="moderate">Moderate (3-5/week)</option>
                                 <option value="frequent">Frequent (6+/week)</option>
                             </select>
+                            <span class="error-msg" id="error-alcohol"></span>
                         </div>
                         
                         <!-- Activity -->
                         <div class="form-group full-width">
                             <label for="activity"><i data-lucide="activity-square"></i> Physical Activity Level</label>
                             <select id="activity" name="activity" required>
+                                <option value="" disabled selected>Select option</option>
                                 <option value="sedentary">Sedentary (Little to no exercise)</option>
                                 <option value="light">Lightly active (1-3 days/week)</option>
                                 <option value="moderate">Moderately active (3-5 days/week)</option>
                                 <option value="very">Very active (6-7 days/week)</option>
                             </select>
+                            <span class="error-msg" id="error-activity"></span>
                         </div>
 
-                        <!-- Conditions (Checkboxes) -->
-                        <div class="form-group full-width conditions-group">
-                            <label><i data-lucide="stethoscope"></i> Existing Conditions (Select all that apply)</label>
-                            <div class="checkbox-grid">
-                                <label class="custom-checkbox">
-                                    <input type="checkbox" name="conditions" value="hypertension">
-                                    <span class="checkmark"></span> Hypertension
-                                </label>
-                                <label class="custom-checkbox">
-                                    <input type="checkbox" name="conditions" value="diabetes">
-                                    <span class="checkmark"></span> Diabetes Type 2
-                                </label>
-                                <label class="custom-checkbox">
-                                    <input type="checkbox" name="conditions" value="highCholesterol">
-                                    <span class="checkmark"></span> High Cholesterol
-                                </label>
-                                <label class="custom-checkbox">
-                                    <input type="checkbox" name="conditions" value="heartDisease">
-                                    <span class="checkmark"></span> Family Heart Disease
-                                </label>
-                            </div>
+                        <!-- Fitness Goal -->
+                        <div class="form-group full-width">
+                            <label for="fitnessGoal"><i data-lucide="target"></i> Fitness Goal</label>
+                            <select id="fitnessGoal" name="fitnessGoal" required>
+                                <option value="" disabled selected>Select your primary goal</option>
+                                <option value="weight_loss">Weight Loss (Fat Loss)</option>
+                                <option value="muscle_gain">Muscle Gain (Bulking)</option>
+                                <option value="maintenance">Maintenance</option>
+                                <option value="endurance">Endurance (Running/Cardio)</option>
+                            </select>
+                            <span class="error-msg" id="error-fitnessGoal"></span>
+                        </div>
+
+                        <!-- Medical History (Text Areas) -->
+                        <div class="form-group full-width">
+                            <label for="existingIllnesses"><i data-lucide="stethoscope"></i> Existing Illnesses (Optional)</label>
+                            <textarea id="existingIllnesses" name="existingIllnesses" placeholder="Describe any diagnosed illnesses (e.g., Hypertension, Diabetes) or type 'None'..." rows="2" class="form-textarea"></textarea>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="familyHistory"><i data-lucide="users"></i> Family Medical History (Optional)</label>
+                            <textarea id="familyHistory" name="familyHistory" placeholder="List relevant family history (e.g., early heart disease)..." rows="2" class="form-textarea"></textarea>
                         </div>
                     </div>
 
                     <div class="form-actions">
-                        <button type="submit" class="btn btn-primary btn-block btn-large">
-                            <i data-lucide="cpu"></i> Generate AI Insight
+                        <button type="submit" class="btn btn-primary btn-block btn-large mt-2" id="submit-btn" disabled>
+                            <i data-lucide="cpu" id="submit-icon"></i> <span id="submit-text">Generate AI Insight</span>
                         </button>
                     </div>
                 </form>
@@ -182,9 +193,14 @@
                 <div class="results-score-panel glass-panel">
                     <div class="score-header">
                         <h2>Your Health Insight</h2>
-                        <button class="btn btn-outline btn-sm" onclick="navigateTo('analyzer')">
-                            <i data-lucide="refresh-cw"></i> Recalculate
-                        </button>
+                        <div class="score-actions">
+                            <button class="btn btn-outline btn-sm" id="download-pdf-btn">
+                                <i data-lucide="download"></i> PDF
+                            </button>
+                            <button class="btn btn-outline btn-sm" onclick="navigateTo('analyzer')">
+                                <i data-lucide="refresh-cw"></i> Recalculate
+                            </button>
+                        </div>
                     </div>
                     
                     <div class="risk-meter-container">
@@ -200,9 +216,19 @@
                     <div class="bmi-card">
                         <div class="bmi-info">
                             <span>BMI</span>
-                            <strong id="bmi-value">22.5</strong>
+                            <strong id="bmi-value">--</strong>
                         </div>
                         <div id="bmi-status" class="bmi-badge bg-success">Normal</div>
+                    </div>
+
+                    <div class="macro-card mt-2">
+                        <h4>Daily Nutrition Targets</h4>
+                        <div class="macro-grid">
+                            <div class="m-item"><span class="m-label text-muted">Calories</span> <strong id="tdee-value">--</strong></div>
+                            <div class="m-item text-danger"><span class="m-label">Protein</span> <strong id="protein-value">--g</strong></div>
+                            <div class="m-item text-warning"><span class="m-label">Carbs</span> <strong id="carbs-value">--g</strong></div>
+                            <div class="m-item text-success"><span class="m-label">Fats</span> <strong id="fats-value">--g</strong></div>
+                        </div>
                     </div>
                 </div>
 
@@ -421,9 +447,35 @@
                 </div>
             </div>
         </section>
+
+        <!-- 8. Progress Dashboard Page -->
+        <section id="page-progress" class="page hidden">
+            <div class="page-header">
+                <h2>Progress Tracker</h2>
+                <p>Monitor your health trends over time based on your past analyses.</p>
+            </div>
+            
+            <div class="progress-layout">
+                <div class="chart-container glass-panel mb-4">
+                    <h3>Risk Score & BMI Trends</h3>
+                    <div style="position: relative; height:300px; width:100%">
+                        <canvas id="progressChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="history-container glass-panel">
+                    <h3>Analysis History</h3>
+                    <div class="history-list mt-2" id="history-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
-    <!-- App Logic -->
+    <!-- App Logic & External Libs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
