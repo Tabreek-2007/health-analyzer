@@ -1,52 +1,111 @@
 // Initialize Lucide Icons
 lucide.createIcons();
 
+// --- API Config ---
+// For deployment, change this to your hosted backend URL (e.g. https://your-app.onrender.com/api/analyze)
+const API_URL = "https://health-analyzer-p2y8.onrender.com/api/analyze";
+
+// --- Global State ---
+let progressHistory = JSON.parse(localStorage.getItem('healthRiskHistory')) || [];
+let progressChartInstance = null;
+
 // --- Navigation Logic ---
 function navigateTo(pageId) {
-    // Hide all pages
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
-        setTimeout(() => page.classList.add('hidden'), 50); // small delay for animation readiness
+        setTimeout(() => page.classList.add('hidden'), 50);
     });
 
-    // Deselect all nav buttons
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
 
-    // Show target page
     const targetPage = document.getElementById(`page-${pageId}`);
     targetPage.classList.remove('hidden');
-    // Force reflow
-    void targetPage.offsetWidth;
+    void targetPage.offsetWidth; // Force reflow
     targetPage.classList.add('active');
 
-    // Highlight active nav button (if exists)
     const activeBtn = document.querySelector(`.nav-btn[data-target="${pageId}"]`);
     if(activeBtn) activeBtn.classList.add('active');
+    
+    // Close mobile menu if open
+    document.getElementById('nav-links').classList.remove('active');
 
-    // Scroll to top
+    if (pageId === 'progress') {
+        setTimeout(renderProgressDashboard, 100); // Wait for page to display
+    }
+
     window.scrollTo(0, 0);
 }
 
-// Add event listeners to nav buttons
 document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
         navigateTo(e.target.dataset.target);
     });
 });
 
+document.querySelector('.mobile-toggle').addEventListener('click', () => {
+    document.getElementById('nav-links').classList.toggle('active');
+});
+
 window.navigateToDetails = function(category) {
     navigateTo(category);
 };
 
-// --- Form & Mock AI Logic ---
+// --- Form Validation ---
 const form = document.getElementById('analyzer-form');
+const submitBtn = document.getElementById('submit-btn');
+const inputs = form.querySelectorAll('input, select, textarea');
 
-form.addEventListener('submit', (e) => {
+function validateForm() {
+    let isValid = true;
+    inputs.forEach(input => {
+        if (!input.hasAttribute('required')) return;
+        const errorMsg = document.getElementById(`error-${input.id}`);
+        if (!errorMsg) return;
+
+        if (!input.value) {
+            isValid = false;
+            errorMsg.innerText = "This field is required.";
+            input.classList.add('input-error');
+        } else if (input.type === 'number') {
+            const val = parseFloat(input.value);
+            const min = parseFloat(input.getAttribute('min'));
+            const max = parseFloat(input.getAttribute('max'));
+            if (val < min || val > max) {
+                isValid = false;
+                errorMsg.innerText = `Must be between ${min} and ${max}.`;
+                input.classList.add('input-error');
+            } else {
+                errorMsg.innerText = "";
+                input.classList.remove('input-error');
+            }
+        } else {
+            errorMsg.innerText = "";
+            input.classList.remove('input-error');
+        }
+    });
+
+    submitBtn.disabled = !isValid;
+    return isValid;
+}
+
+inputs.forEach(input => {
+    input.addEventListener('input', validateForm);
+    input.addEventListener('change', validateForm);
+});
+
+// --- Form Submission & API Call ---
+form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
     
-    // Gather Data
+    submitBtn.disabled = true;
+    const oldIcon = document.getElementById('submit-icon').getAttribute('data-lucide');
+    document.getElementById('submit-icon').setAttribute('data-lucide', 'loader-2');
+    document.getElementById('submit-text').innerText = "Analyzing Server Data...";
+    lucide.createIcons();
+
     const formData = new FormData(form);
-    const data = {
+    const payload = {
         age: parseInt(formData.get('age')),
         gender: formData.get('gender'),
         height: parseFloat(formData.get('height')),
@@ -54,258 +113,185 @@ form.addEventListener('submit', (e) => {
         smoking: formData.get('smoking'),
         alcohol: formData.get('alcohol'),
         activity: formData.get('activity'),
-        conditions: formData.getAll('conditions')
+        fitness_goal: formData.get('fitnessGoal'),
+        existing_illnesses: formData.get('existingIllnesses') || "",
+        family_history: formData.get('familyHistory') || ""
     };
 
-    // Calculate BMI
-    // Height in cm to meters
-    const heightM = data.height / 100;
-    const bmi = data.weight / (heightM * heightM);
-    
-    // Process Mock AI Risk Score (Scale 0 to 100)
-    let riskScore = 10; // base score
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
 
-    // Age Factor
-    if (data.age > 45) riskScore += 10;
-    if (data.age > 60) riskScore += 15;
-
-    // BMI Factor
-    let bmiStatus = "Normal";
-    let bmiClass = "bg-success";
-    if (bmi < 18.5) {
-        bmiStatus = "Underweight";
-        bmiClass = "bg-warning";
-        riskScore += 5;
-    } else if (bmi >= 25 && bmi < 30) {
-        bmiStatus = "Overweight";
-        bmiClass = "bg-warning";
-        riskScore += 15;
-    } else if (bmi >= 30) {
-        bmiStatus = "Obese";
-        bmiClass = "bg-danger";
-        riskScore += 25;
+        if (!response.ok) throw new Error("API request failed: " + response.statusText);
+        
+        const result = await response.json();
+        
+        saveProgress(result);
+        updateResultsUI(result);
+        navigateTo('results');
+        
+    } catch (error) {
+        alert("Error connecting to server. Make sure the FastAPI backend is running locally or deployed.");
+        console.error(error);
+    } finally {
+        submitBtn.disabled = false;
+        document.getElementById('submit-icon').setAttribute('data-lucide', 'cpu');
+        document.getElementById('submit-text').innerText = "Generate AI Insight";
+        lucide.createIcons();
     }
-
-    // Smoking
-    if (data.smoking === 'regular') riskScore += 25;
-    if (data.smoking === 'occasional') riskScore += 10;
-    if (data.smoking === 'former') riskScore += 5;
-
-    // Alcohol
-    if (data.alcohol === 'frequent') riskScore += 15;
-    if (data.alcohol === 'moderate') riskScore += 5;
-
-    // Activity
-    if (data.activity === 'sedentary') riskScore += 15;
-    if (data.activity === 'light') riskScore += 5;
-    if (data.activity === 'very') riskScore -= 5; // healthy habit
-
-    // Conditions
-    riskScore += (data.conditions.length * 15);
-
-    // Normalize
-    riskScore = Math.max(0, Math.min(riskScore, 100));
-
-    // Determine Level
-    let riskLevel = "Low";
-    let themeColor = "var(--success)";
-    let themeStr = "success";
-    let alertMsg = "Your overall health profile looks great. Maintain your current lifestyle to keep risks low.";
-
-    if (riskScore >= 40 && riskScore < 70) {
-        riskLevel = "Medium";
-        themeColor = "var(--warning)";
-        themeStr = "warning";
-        alertMsg = "Our AI has identified some moderate risk factors. Consider adjusting your lifestyle habits.";
-    } else if (riskScore >= 70) {
-        riskLevel = "High";
-        themeColor = "var(--danger)";
-        themeStr = "danger";
-        alertMsg = "High risk indicators detected. We strongly recommend consulting a healthcare professional.";
-    }
-
-    // --- Update Results UI ---
-    
-    // BMI
-    document.getElementById('bmi-value').innerText = bmi.toFixed(1);
-    const bmiBadge = document.getElementById('bmi-status');
-    bmiBadge.innerText = bmiStatus;
-    bmiBadge.className = `bmi-badge ${bmiClass}`;
-
-    // Risk Meter & Level
-    document.getElementById('risk-level-text').innerText = riskLevel;
-    document.getElementById('risk-level-text').className = `risk-value text-${themeStr}`;
-    
-    // Animate Circular Progress (conic-gradient)
-    const riskCircle = document.getElementById('risk-circle');
-    // Calculate degree (0 to 360) based on score (0 to 100)
-    const degree = Math.round((riskScore / 100) * 360);
-    riskCircle.style.background = `conic-gradient(${themeColor} ${degree}deg, var(--border-color) 0deg)`;
-
-    // Alert Panel
-    document.getElementById('risk-summary-text').innerText = alertMsg;
-    const alertBox = document.getElementById('risk-alert');
-    alertBox.style.borderLeftColor = themeColor;
-    alertBox.querySelector('.alert-icon').style.color = themeColor;
-
-    // Possible Risks
-    const risksList = document.getElementById('possible-risks-list');
-    risksList.innerHTML = ''; // clear
-    let detectedRisks = [];
-    
-    if (bmi >= 25 || data.conditions.includes('diabetes')) detectedRisks.push({ icon: 'activity', name: 'Metabolic Syndrome' });
-    if (data.smoking === 'regular' || data.smoking === 'occasional') detectedRisks.push({ icon: 'wind', name: 'Respiratory Issues' });
-    if (data.conditions.includes('hypertension') || data.conditions.includes('heartDisease') || riskScore > 60) detectedRisks.push({ icon: 'heart-pulse', name: 'Cardiovascular Risk' });
-    
-    if (detectedRisks.length === 0) {
-        detectedRisks.push({ icon: 'shield-check', name: 'No Specific Flagged Risks' });
-    }
-
-    detectedRisks.forEach(risk => {
-        const tag = document.createElement('div');
-        tag.className = 'risk-tag';
-        tag.innerHTML = `<i data-lucide="${risk.icon}" style="width: 16px;"></i> ${risk.name}`;
-        risksList.appendChild(tag);
-    });
-
-    // Generate Tips
-    const dietTips = document.getElementById('diet-tips');
-    const exerciseTips = document.getElementById('exercise-tips');
-    const lifestyleTips = document.getElementById('lifestyle-tips');
-
-    if (riskLevel === "High") {
-        dietTips.innerText = "Crucial: Reduce sodium and processed foods. Prioritize a Mediterranean diet.";
-        exerciseTips.innerText = "Consult a doctor before starting exercise, then aim for gentle daily walks.";
-        lifestyleTips.innerText = "Urgent: Eliminate smoking if applicable and seek medical guidance for current conditions.";
-    } else if (riskLevel === "Medium") {
-        dietTips.innerText = "Focus on portion control and lean proteins. Cut back on added sugars.";
-        exerciseTips.innerText = "Increase cardiovascular activities to at least 150 minutes per week.";
-        lifestyleTips.innerText = "Improve sleep hygiene and find active ways to manage daily stress.";
-    } else {
-        dietTips.innerText = "Maintain your current balanced diet. Stay hydrated daily.";
-        exerciseTips.innerText = "Keep up the great work! Try adding some strength training 2x a week.";
-        lifestyleTips.innerText = "Continue your healthy habits and ensure 7-8 hours of sleep.";
-    }
-
-    // Populate Detailed Pages
-    populateDetailsPages(riskLevel);
-
-    // Re-initialize any dynamic icons
-    lucide.createIcons();
-
-    // Navigate to results
-    navigateTo('results');
 });
 
-// --- Dynamic Population Logic for Details Pages ---
-function populateDetailsPages(level) {
-    // Diet Page
-    const dietPlanContent = document.getElementById('diet-plan-content');
-    const goodFoodsList = document.getElementById('good-foods-list');
-    const badFoodsList = document.getElementById('bad-foods-list');
-    const mealPlanTimeline = document.getElementById('meal-plan-timeline');
+function saveProgress(result) {
+    const entry = {
+        date: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+        bmi: result.bmi,
+        riskScore: result.riskScore,
+        riskLevel: result.riskLevel
+    };
+    progressHistory.push(entry);
+    localStorage.setItem('healthRiskHistory', JSON.stringify(progressHistory));
+}
 
-    // Exercise Page
-    const exercisePlanContent = document.getElementById('exercise-plan-content');
-    const exerciseIntensityBadge = document.getElementById('exercise-intensity-badge');
-    const weeklySchedule = document.getElementById('weekly-schedule');
+// --- Update UI ---
+function updateResultsUI(data) {
+    // Basic Info
+    document.getElementById('bmi-value').innerText = data.bmi;
+    
+    // Status
+    const bmiBadge = document.getElementById('bmi-status');
+    if (data.bmi < 18.5) { bmiBadge.innerText = 'Underweight'; bmiBadge.className = 'bmi-badge bg-warning'; }
+    else if (data.bmi < 25) { bmiBadge.innerText = 'Normal'; bmiBadge.className = 'bmi-badge bg-success'; }
+    else if (data.bmi < 30) { bmiBadge.innerText = 'Overweight'; bmiBadge.className = 'bmi-badge bg-warning'; }
+    else { bmiBadge.innerText = 'Obese'; bmiBadge.className = 'bmi-badge bg-danger'; }
 
-    // Lifestyle Page
-    const sleepTips = document.getElementById('sleep-tips');
-    const stressTips = document.getElementById('stress-tips');
-    const dosList = document.getElementById('dos-list');
-    const dontsList = document.getElementById('donts-list');
+    // Risk Meter Display
+    document.getElementById('risk-level-text').innerText = data.riskLevel;
+    let themeColor = "var(--success)";
+    let themeStr = "success";
+    if (data.riskLevel === "Medium") { themeColor = "var(--warning)"; themeStr = "warning"; }
+    else if (data.riskLevel === "High") { themeColor = "var(--danger)"; themeStr = "danger"; }
+    
+    document.getElementById('risk-level-text').className = `risk-value text-${themeStr}`;
+    const riskCircle = document.getElementById('risk-circle');
+    const degree = Math.round((data.riskScore / 100) * 360);
+    riskCircle.style.background = `conic-gradient(${themeColor} ${degree}deg, var(--border-color) 0deg)`;
 
-    if (level === "Low") {
-        // Diet
-        dietPlanContent.innerHTML = "<p>Maintain a <strong>Balanced Diet</strong> focusing on sustaining your current health metrics. You don't need strict restrictions.</p>";
-        goodFoodsList.innerHTML = "<li>Mixed nuts and seeds</li><li>Lean proteins (chicken, tofu)</li><li>Whole grain bread</li><li>Fresh seasonal fruits</li>";
-        badFoodsList.innerHTML = "<li>Excessive added sugars</li><li>Highly processed snacks</li>";
-        mealPlanTimeline.innerHTML = `
-            <div class="meal-slot"><div class="meal-time">8:00 AM</div><div class="meal-desc">Oatmeal with berries and a handful of almonds.</div></div>
-            <div class="meal-slot"><div class="meal-time">1:00 PM</div><div class="meal-desc">Grilled chicken salad with olive oil dressing.</div></div>
-            <div class="meal-slot"><div class="meal-time">7:00 PM</div><div class="meal-desc">Baked salmon with quinoa and steamed broccoli.</div></div>
-        `;
+    // Macros
+    document.getElementById('tdee-value').innerText = data.targetCalories;
+    document.getElementById('protein-value').innerText = data.macros.protein + "g";
+    document.getElementById('carbs-value').innerText = data.macros.carbs + "g";
+    document.getElementById('fats-value').innerText = data.macros.fats + "g";
 
-        // Exercise
-        exercisePlanContent.innerHTML = "<p>Keep up the great work! A mix of moderate cardio and light strength training is ideal to maintain your fitness.</p>";
-        exerciseIntensityBadge.innerText = "Moderate";
-        exerciseIntensityBadge.className = "badge badge-sm bg-success text-white";
-        weeklySchedule.innerHTML = `
-            <div class="day-card"><h5>Mon</h5><p>30m Jog</p></div>
-            <div class="day-card"><h5>Tue</h5><p>Strength</p></div>
-            <div class="day-card rest-day"><h5>Wed</h5><p>Rest/Yoga</p></div>
-            <div class="day-card"><h5>Thu</h5><p>45m Cycle</p></div>
-            <div class="day-card"><h5>Fri</h5><p>Strength</p></div>
-            <div class="day-card"><h5>Sat</h5><p>Active Rec.</p></div>
-            <div class="day-card rest-day"><h5>Sun</h5><p>Rest</p></div>
-        `;
+    // Set Dynamic Tips
+    document.getElementById('diet-tips').innerText = data.personalizedTips.diet;
+    document.getElementById('exercise-tips').innerText = data.personalizedTips.exercise;
+    document.getElementById('lifestyle-tips').innerText = data.personalizedTips.lifestyle;
 
-        // Lifestyle
-        sleepTips.innerText = "Continue aiming for 7-8 hours. Establish a regular sleep schedule.";
-        stressTips.innerText = "Your stress seems managed. Standard mindfulness like reading before bed works well.";
-        dosList.innerHTML = "<li>Stay hydrated (8 glasses/day)</li><li>Take breaks from screens</li><li>Walk outdoors daily</li>";
-        dontsList.innerHTML = "<li>Don't skip breakfast</li><li>Avoid late-night heavy meals</li>";
-    } else if (level === "Medium") {
-        // Diet
-        dietPlanContent.innerHTML = "<p>Transition to a <strong>Lower-Carb / Mediterranean Diet</strong> to proactively manage risk factors before they escalate.</p>";
-        goodFoodsList.innerHTML = "<li>Leafy greens (spinach, kale)</li><li>Fatty fish (salmon, mackerel)</li><li>Olive oil</li><li>Legumes</li>";
-        badFoodsList.innerHTML = "<li>Refined carbohydrates (white bread)</li><li>Sugary drinks/sodas</li><li>Fried foods</li>";
-        mealPlanTimeline.innerHTML = `
-            <div class="meal-slot"><div class="meal-time">8:00 AM</div><div class="meal-desc">Greek yogurt with chia seeds and walnuts.</div></div>
-            <div class="meal-slot"><div class="meal-time">1:00 PM</div><div class="meal-desc">Lentil soup with a side of mixed greens.</div></div>
-            <div class="meal-slot"><div class="meal-time">7:00 PM</div><div class="meal-desc">Turkey meatballs with zucchini noodles.</div></div>
-        `;
+    // Detailed Pages content update
+    document.getElementById('diet-plan-content').innerHTML = `<p>${data.personalizedTips.diet}</p><p>Aim for ${data.targetCalories} calories (${data.macros.protein}g P, ${data.macros.carbs}g C, ${data.macros.fats}g F).</p>`;
+    document.getElementById('exercise-plan-content').innerHTML = `<p>${data.personalizedTips.exercise}</p>`;
+    document.getElementById('sleep-tips').innerText = data.personalizedTips.lifestyle;
 
-        // Exercise
-        exercisePlanContent.innerHTML = "<p>Increase your cardiovascular activity to burn fat and improve heart health. Aim for 150 minutes weekly.</p>";
-        exerciseIntensityBadge.innerText = "Cardio Focus";
-        exerciseIntensityBadge.className = "badge badge-sm bg-warning text-dark";
-        weeklySchedule.innerHTML = `
-            <div class="day-card"><h5>Mon</h5><p>45m Brisk Walk</p></div>
-            <div class="day-card"><h5>Tue</h5><p>Light Weights</p></div>
-            <div class="day-card rest-day"><h5>Wed</h5><p>Rest</p></div>
-            <div class="day-card"><h5>Thu</h5><p>30m Swim/Cycle</p></div>
-            <div class="day-card"><h5>Fri</h5><p>45m Brisk Walk</p></div>
-            <div class="day-card"><h5>Sat</h5><p>Yoga/Flexibility</p></div>
-            <div class="day-card rest-day"><h5>Sun</h5><p>Rest</p></div>
-        `;
+    lucide.createIcons();
+}
 
-        // Lifestyle
-        sleepTips.innerText = "Crucial: Ensure strict 8-hour sleep. Avoid screens 1 hour before bed.";
-        stressTips.innerText = "Introduce 10 minutes of deep breathing exercises daily to lower cortisol.";
-        dosList.innerHTML = "<li>Track your daily steps (Goal: 8,000)</li><li>Drink green tea</li><li>Stretch daily</li>";
-        dontsList.innerHTML = "<li>Don't sit for >2 hours straight</li><li>Avoid excessive caffeine after 2 PM</li>";
-    } else {
-        // High Risk
-        // Diet
-        dietPlanContent.innerHTML = "<p>Adopt a <strong>Strict Heart-Healthy / DASH Diet</strong>. Immediate dietary intervention is highly recommended.</p>";
-        goodFoodsList.innerHTML = "<li>Oats and whole grains</li><li>Lots of vegetables</li><li>Skinless poultry</li><li>Berries</li>";
-        badFoodsList.innerHTML = "<li>High-sodium prepared foods</li><li>Red meat</li><li>Alcohol</li><li>Trans fats</li>";
-        mealPlanTimeline.innerHTML = `
-            <div class="meal-slot"><div class="meal-time">8:00 AM</div><div class="meal-desc">Steel-cut oats with blueberries. No added sugar.</div></div>
-            <div class="meal-slot"><div class="meal-time">1:00 PM</div><div class="meal-desc">Large spinach salad with grilled chicken, no salt added dressing.</div></div>
-            <div class="meal-slot"><div class="meal-time">7:00 PM</div><div class="meal-desc">Baked white fish with steamed asparagus and brown rice.</div></div>
-        `;
+// --- PDF Generation ---
+document.getElementById('download-pdf-btn').addEventListener('click', () => {
+    const element = document.querySelector('.results-layout'); // What to download
+    const opt = {
+      margin:       10,
+      filename:     'AI-Health-Report.pdf',
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2 },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(element).save();
+});
 
-        // Exercise
-        exercisePlanContent.innerHTML = "<p>Please consult a physician before starting. Begin with gentle, low-impact movements to avoid strain.</p>";
-        exerciseIntensityBadge.innerText = "Low Impact / Beginner";
-        exerciseIntensityBadge.className = "badge badge-sm bg-danger text-white";
-        weeklySchedule.innerHTML = `
-            <div class="day-card"><h5>Mon</h5><p>15m Gentle Walk</p></div>
-            <div class="day-card rest-day"><h5>Tue</h5><p>Rest</p></div>
-            <div class="day-card"><h5>Wed</h5><p>15m Gentle Walk</p></div>
-            <div class="day-card rest-day"><h5>Thu</h5><p>Rest</p></div>
-            <div class="day-card"><h5>Fri</h5><p>15m Gentle Walk</p></div>
-            <div class="day-card"><h5>Sat</h5><p>Light Stretching</p></div>
-            <div class="day-card rest-day"><h5>Sun</h5><p>Rest</p></div>
-        `;
-
-        // Lifestyle
-        sleepTips.innerText = "Prioritize recovery. If sleep apnea is suspected, consult a doctor.";
-        stressTips.innerText = "Chronic stress management is required. Consider guided meditation or therapy.";
-        dosList.innerHTML = "<li>Schedule a doctor's checkup</li><li>Monitor blood pressure at home</li><li>Seek support from family/friends</li>";
-        dontsList.innerHTML = "<li>Do NOT smoke or use tobacco</li><li>Do NOT engage in high-intensity exercise without clearance</li>";
+// --- Progress Dashboard Logic ---
+function renderProgressDashboard() {
+    const historyList = document.getElementById('history-list');
+    historyList.innerHTML = '';
+    
+    if (progressHistory.length === 0) {
+        historyList.innerHTML = "<p style='color: var(--text-muted);'>No analysis history yet. Complete an analysis first!</p>";
+        return;
     }
+
+    // Populate List
+    [...progressHistory].reverse().forEach((item, index) => {
+        let badgeColor = item.riskLevel === 'Low' ? '#10b981' : item.riskLevel === 'Medium' ? '#f59e0b' : '#ef4444';
+        const div = document.createElement('div');
+        div.className = 'history-card';
+        div.innerHTML = `
+            <div>
+                <strong style="font-size: 1.1rem;">${item.date}</strong>
+                <div style="font-size: 0.9rem; margin-top: 4px; color: var(--text-muted);">
+                    Risk Level: <span style="background: ${badgeColor}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${item.riskLevel}</span>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <div style="color: var(--primary); font-weight: bold; font-size: 1.2rem;">BMI: ${item.bmi}</div>
+                <div style="color: var(--text-muted); font-size: 0.9rem;">Score: ${item.riskScore}</div>
+            </div>
+        `;
+        historyList.appendChild(div);
+    });
+
+    // Populate Chart
+    const ctx = document.getElementById('progressChart').getContext('2d');
+    const labels = progressHistory.map(h => h.date.split(' ')[0]); // just date 
+    const bmiData = progressHistory.map(h => h.bmi);
+    const scoreData = progressHistory.map(h => h.riskScore); // fallback for typo if any
+
+    if (progressChartInstance) {
+        progressChartInstance.destroy();
+    }
+
+    progressChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'BMI Trend',
+                    data: bmiData,
+                    borderColor: '#006ce6',
+                    backgroundColor: 'rgba(0, 108, 230, 0.1)',
+                    yAxisID: 'y',
+                    tension: 0.3,
+                    fill: true
+                },
+                {
+                    label: 'Risk Score (0-100)',
+                    data: scoreData,
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    yAxisID: 'y1',
+                    tension: 0.3,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            scales: {
+                y: { 
+                    type: 'linear', display: true, position: 'left', 
+                    title: {display: true, text: 'BMI'} 
+                },
+                y1: { 
+                    type: 'linear', display: true, position: 'right', 
+                    min: 0, max: 100, 
+                    title: {display: true, text: 'Risk Score'}, 
+                    grid: {drawOnChartArea: false} 
+                }
+            }
+        }
+    });
 }
